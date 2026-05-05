@@ -139,6 +139,14 @@ import kotlin.math.abs
 class Skytils {
 
     companion object : CoroutineScope {
+        private val skyblockSidebarPrefixes = setOf(
+            "SKYBLOCK",
+            "SKIBLOCK",
+            "空岛生存",
+            "空島生存",
+            "SKYBLOQUE",
+            "САЙБЛОК"
+        )
         const val MOD_ID = Reference.MOD_ID
         const val MOD_NAME = Reference.MOD_NAME
         const val VERSION = Reference.VERSION
@@ -553,7 +561,17 @@ class Skytils {
             Utils.dungeons = false
         }
         if (!Utils.inSkyblock && Utils.isOnHypixel && event.packet is S3DPacketDisplayScoreboard && event.packet.func_149371_c() == 1) {
-            Utils.skyblock = event.packet.func_149370_d() == "SBScoreboard"
+            val internalObjectiveName = event.packet.func_149370_d()
+            val sidebarObjectiveName = mc.theWorld?.scoreboard?.getObjectiveInDisplaySlot(1)?.displayName
+                ?.replace(Regex("(?i)\\u00A7."), "")
+                ?.trim()
+
+            val hasSkyblockSidebar = sidebarObjectiveName?.let { sidebar ->
+                val normalized = sidebar.uppercase().replace(Regex("[^\\p{L}\\p{N}]"), "")
+                skyblockSidebarPrefixes.any { normalized.startsWith(it) }
+            } == true
+
+            Utils.skyblock = internalObjectiveName == "SBScoreboard" || hasSkyblockSidebar
             printDevMessage({ "score ${event.packet.func_149370_d()}" }, "utils")
             printDevMessage({ "sb ${Utils.inSkyblock}" }, "utils")
         }
